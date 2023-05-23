@@ -27,9 +27,37 @@ class Player {
         }
     }
 
+    /** handle a chat message: broadchast to Game */
+    handleChat(text) {
+        this.game.broadcast({
+            name: this.name,
+            type: "chat",
+            text: text
+        });
+    }
+
+    /** handle joining game:  add to Game members, annouce to other players */
+    handleJoin(name) {
+        this.name = name;
+        this.game.join(this);
+        // need to broadcast to other players.
+    }
+
+    /** Connection was closed:  leave game, send message to other players */
+    handleClose() {
+        this.game.leave(this);
+        // this.game.broadcast({
+        //     type: "playerLeft",
+        //     data: this.name
+        // });
+    }
+
     /** Handle messages from client */
-    handleMessage(data) {
-        //logic here
+    handleMessage(jsonData) {
+        const msg = JSON.parse(jsonData);
+        if (msg.type === "chat") this.handleChat(msg.data);
+        else if (msg.type === "selfjoin") this.handleJoin(msg.data);
+        else if (msg.type === "selfleave") this.handleClose()
     }
 }
 

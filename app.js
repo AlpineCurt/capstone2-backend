@@ -5,6 +5,7 @@ const cors = require("cors");
 
 const { NotFoundError } = require("./expressError.js");
 const Player = require("./models/Player.js")
+const Game = require("./models/Game.js");
 
 const app = express();
 
@@ -13,6 +14,28 @@ const wsExpress = require("express-ws")(app);
 app.use(cors());
 app.use(express.json());
 
+
+/** Request new valid gameId */
+
+app.get("/games/new", (req, res, next) => {
+    try {
+        const gameId = Game.makeGameId();
+        return res.json({gameId});
+    } catch (err) {
+        return next(err);
+    }
+});
+
+/** Check if gameId exists */
+
+app.get("/games/:gameId", (req, res, next) => {
+    try {
+        const exists = Game.exists(req.params.gameId);
+        return res.json({exists});
+    } catch (err) {
+        return next(err);
+    }
+});
 
 /** WebSocket connection to /games/:gameId */
 
@@ -28,6 +51,14 @@ app.ws("/games/:gameId", (ws, req, next) => {
                 user.handleMessage(data);
             } catch (err) {
                 console.log(err);
+            }
+        });
+
+        ws.on("close", () => {
+            try {
+                user.handleClose();
+            } catch (err) {
+                console.error(err);
             }
         });
     } catch (err) {

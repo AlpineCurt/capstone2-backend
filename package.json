@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon --inspect server.js",
+    "start:debug": "nodemon --inspect server.js",
     "test": "npm run test"
   },
   "repository": {

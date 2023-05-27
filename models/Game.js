@@ -11,7 +11,6 @@ class Game {
 
     constructor(gameId) {
         this.id = gameId;
-        //this.players = new Set();
         this.players = [];
         this.phase = "lobby";
     }
@@ -44,20 +43,18 @@ class Game {
 
     /** player joining a game */
     join(player) {
-        //this.players.add(player);
-        this.players.push(player);
+
+        const players = new Set(
+            this.players.map((player) => player.name)
+        );
+        if (!players.has(player.name)) {
+            this.players.push(player);
+        }
         this.playersUpdate();
-        // this.broadcast({
-        //     type: "playerUpdate",
-        //     players: this.players.map(player => ({
-        //         name: player.name
-        //     }))
-        // });
     }
 
     /** player leaving a game */
     leave(player) {
-        //this.players.delete(player);
         this.players = this.players.filter((p) => p !== player);
         this.playersUpdate();
     }

@@ -46,10 +46,19 @@ class Player {
     /** Connection was closed:  leave game, send message to other players */
     handleClose() {
         this.game.leave(this);
-        // this.game.broadcast({
-        //     type: "playerLeft",
-        //     data: this.name
-        // });
+    }
+
+    /** Prepares and returns "data" object on current state of Game
+     *  This will be a generic handler for Game state updates
+    */
+    stateRequest() {
+        let data = {
+            type: "stateReq"
+        };
+        data.players = this.game.players.map(player => ({
+            name: player.name
+        }))
+        return JSON.stringify(data);
     }
 
     /** Handle messages from client */
@@ -57,7 +66,8 @@ class Player {
         const msg = JSON.parse(jsonData);
         if (msg.type === "chat") this.handleChat(msg.data);
         else if (msg.type === "selfjoin") this.handleJoin(msg.data);
-        else if (msg.type === "selfleave") this.handleClose()
+        else if (msg.type === "selfleave") this.handleClose();
+        else if (msg.type === "stateReq") this.send(this.stateRequest());
     }
 }
 

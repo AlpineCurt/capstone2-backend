@@ -49,13 +49,23 @@ class Game {
         );
         if (!players.has(player.name)) {
             this.players.push(player);
+            if (this.players.length === 1) {
+                player.isHost = true;
+            }
         }
+        //debugger;
         this.playersUpdate();
     }
 
     /** player leaving a game */
     leave(player) {
         this.players = this.players.filter((p) => p !== player);
+        if (this.players.length) this.players[0].isHost = true;
+        this.playersUpdate();
+    }
+
+    close() {
+        this.players[0].isHost = true;
         this.playersUpdate();
     }
 
@@ -67,7 +77,8 @@ class Game {
         this.broadcast({
             type: "playerUpdate",
             players: this.players.map(player => ({
-                name: player.name
+                name: player.name,
+                isHost: player.isHost
             }))
         });
     }

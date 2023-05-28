@@ -17,6 +17,7 @@ class Player {
         this.game = Game.get(gameId);
 
         this.name = null;
+        this.isHost = false;
     }
 
     send(data) {

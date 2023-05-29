@@ -13,6 +13,7 @@ class Game {
         this.id = gameId;
         this.players = [];
         this.phase = "lobby";
+        this.acceptingNewPlayers = true;
     }
 
     /** Get Game object by gameId, creating if nonexistent */

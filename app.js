@@ -41,10 +41,26 @@ app.get("/games/:gameId", (req, res, next) => {
 
 app.ws("/games/:gameId", (ws, req, next) => {
     try {
-        const user = new Player(
-            ws.send.bind(ws), // function to send messages to this player
-            req.params.gameId
-        );
+        let user;
+
+        if (req.query.username) {
+            // Attempt to reconnect if user already exists
+            const player = Game.playerInGameId(req.query.username, req.params.gameId);
+            if (player) {
+                user = player;
+                user.send = ws.send.bind(ws);  // re-bind the new ws connection to Player send method
+            } else {
+                user = new Player(
+                    ws.send.bind(ws), // function to send messages to this player
+                    req.params.gameId
+                );
+            }
+        } else {
+            user = new Player(
+                ws.send.bind(ws), // function to send messages to this player
+                req.params.gameId
+            );
+        }
 
         ws.on("message", (data) => {
             try {

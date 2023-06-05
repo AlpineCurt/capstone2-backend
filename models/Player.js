@@ -18,6 +18,10 @@ class Player {
 
         this.name = null;
         this.isHost = false;
+        this.score = 0;
+        this.status = "";
+        this.didAnswer = false;
+        this.answer = ""
     }
 
     send(data) {
@@ -37,6 +41,22 @@ class Player {
         });
     }
 
+    /** Host has clicked Begin Game */
+    handleBeginGame() {
+        if (this.isHost) {
+            this.game.beginGame();
+            // this.player.game.acceptingNewPlayers = false;
+            // this.players.game.state.choosingCategories = true;
+        }
+    }
+
+    handleAnswer(data) {
+        this.didAnswer = true;
+        this.answer = data;
+        this.status = "Answered!";
+        this.game.playerAnswered();
+    }
+
     /** handle joining game:  add to Game members, annouce to other players */
     handleJoin(name) {
         this.name = name;
@@ -50,15 +70,19 @@ class Player {
     }
 
     /** Prepares and returns "data" object on current state of Game
-     *  This will be a generic handler for Game state updates
+     *  This is if an individual Player connection needs an update.
     */
     stateRequest() {
         let data = {
             type: "stateReq"
         };
         data.players = this.game.players.map(player => ({
-            name: player.name
-        }))
+            name: player.name,
+            isHost: player.isHost,
+            score: player.score,
+            status: player.status
+        }));
+        data.data = this.game.state;
         return JSON.stringify(data);
     }
 
@@ -69,6 +93,9 @@ class Player {
         else if (msg.type === "selfjoin") this.handleJoin(msg.data);
         else if (msg.type === "selfleave") this.handleClose();
         else if (msg.type === "stateReq") this.send(this.stateRequest());
+        else if (msg.type === "begingame") this.handleBeginGame();
+        else if (msg.type === "answer") this.handleAnswer(msg.data);
+        else if (msg.type === "nextQuestion") this.game.nextQuestion();
     }
 }
 

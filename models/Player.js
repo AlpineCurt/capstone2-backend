@@ -89,6 +89,7 @@ class Player {
     /** Handle messages from client */
     handleMessage(jsonData) {
         const msg = JSON.parse(jsonData);
+        //debugger;
         if (msg.type === "chat") this.handleChat(msg.data);
         else if (msg.type === "selfjoin") this.handleJoin(msg.data);
         else if (msg.type === "selfleave") this.handleClose();
@@ -96,6 +97,7 @@ class Player {
         else if (msg.type === "begingame") this.handleBeginGame();
         else if (msg.type === "answer") this.handleAnswer(msg.data);
         else if (msg.type === "nextQuestion") this.game.nextQuestion();
+        else if (msg.type === "timerUpdate") this.game.timerUpdate(msg.data);
     }
 }
 

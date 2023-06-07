@@ -9,6 +9,12 @@ const { TriviaApi } = require("../api.js");
 // in-memory storage of Game instances
 const GAMES = new Map();
 
+const SCORE_MULTIPLIER = 5;
+// SCORE_MULTIPLIER * seconds remaining = points awarded
+const TIMEOUT_PENALTY = 20; // points
+const TIMER_LENGTH = 5; // seconds
+const QUESTION_COUNT = 3;
+
 class Game {
 
     constructor(gameId) {
@@ -21,12 +27,13 @@ class Game {
             question: "",
             answers: [],
             roundFinished: false,
-            timerLength: 20,
+            timerLength: TIMER_LENGTH,
             timeRemaining: 10,
-            reason: ""
+            reason: "",
+            correct_answer: ""
         }
         this.questions = [];
-        this.questionCount = 0;
+        this.questionCount = QUESTION_COUNT;
         this.token = "";
         this.currQuesIdx = 0;
         this.newQuestion = true;
@@ -108,7 +115,7 @@ class Game {
         this.state.phase = "inGame";
         try {
             this.token = await TriviaApi.getToken();
-            this.questions = await TriviaApi.getQuestions(10, this.token);
+            this.questions = await TriviaApi.getQuestions(this.questionCount, this.token);
             this.prepareQuestion();
         } catch (err) {
             console.log(err);
@@ -125,13 +132,18 @@ class Game {
         }
         this.state.roundFinished = false;
         this.state.timeRemaining = this.state.timerLength;
+        this.state.correct_answer = "";
 
         // get next question
-        this.state.question = this.questions[this.currQuesIdx].question;
-        this.state.answers = [...this.questions[this.currQuesIdx].incorrect_answers];
-        const randIdx = Math.floor(Math.random() * 4);
-        this.state.answers.splice(randIdx, 0, this.questions[this.currQuesIdx].correct_answer);
-        this.state.newQuestion = true;
+        if (this.currQuesIdx === this.questions.length) {
+            this.state.phase = "results";
+        } else {
+            this.state.question = this.questions[this.currQuesIdx].question;
+            this.state.answers = [...this.questions[this.currQuesIdx].incorrect_answers];
+            const randIdx = Math.floor(Math.random() * 4);
+            this.state.answers.splice(randIdx, 0, this.questions[this.currQuesIdx].correct_answer);
+            this.state.newQuestion = true;
+        }
     }
 
     playerAnswered() {
@@ -149,13 +161,17 @@ class Game {
     checkAnswers() {
         for (let player of this.players) {
             if (player.answer === this.questions[this.currQuesIdx].correct_answer) {
-                player.score += 100;
+                player.score += player.timeScore * SCORE_MULTIPLIER;
                 player.status = "Correct!";
             } else {
+                if (player.answer === "timeOut-33") {
+                    player.score -= TIMEOUT_PENALTY;
+                }
                 player.status = "Wrong!";
             }
         }
         this.state.newQuestion = false;
+        this.state.correctAnswer = this.questions[this.currQuesIdx].correct_answer;
         this.currQuesIdx += 1;
     }
 
@@ -164,10 +180,6 @@ class Game {
         this.state.reason = "new question";
         this.stateUpdate();
         this.state.newQuestion = false;
-    }
-
-    timerUpdate(data) {
-        this.state.timeRemaining = data;
     }
 
     /** Broadcasts an updated gameState to current players.

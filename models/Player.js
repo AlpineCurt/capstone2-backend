@@ -21,7 +21,8 @@ class Player {
         this.score = 0;
         this.status = "";
         this.didAnswer = false;
-        this.answer = ""
+        this.answer = "";
+        this.timeScore = 0;
     }
 
     send(data) {
@@ -52,7 +53,8 @@ class Player {
 
     handleAnswer(data) {
         this.didAnswer = true;
-        this.answer = data;
+        this.answer = data.answer;
+        this.timeScore = data.timeRemaining;
         this.status = "Answered!";
         this.game.playerAnswered();
     }

@@ -99,7 +99,7 @@ class Player {
         else if (msg.type === "begingame") this.handleBeginGame();
         else if (msg.type === "answer") this.handleAnswer(msg.data);
         else if (msg.type === "nextQuestion") this.game.nextQuestion();
-        else if (msg.type === "timerUpdate") this.game.timerUpdate(msg.data);
+        //else if (msg.type === "timerUpdate") this.game.timerUpdate(msg.data);
     }
 }
 

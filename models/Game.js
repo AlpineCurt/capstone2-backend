@@ -10,10 +10,10 @@ const { TriviaApi } = require("../api.js");
 const GAMES = new Map();
 
 const SCORE_MULTIPLIER = 5;
-// SCORE_MULTIPLIER * seconds remaining = points awarded
+/* SCORE_MULTIPLIER * seconds remaining = points awarded */
 const TIMEOUT_PENALTY = 20; // points
-const TIMER_LENGTH = 5; // seconds
-const QUESTION_COUNT = 3;
+const TIMER_LENGTH = 10; // seconds
+const QUESTION_COUNT = 4;
 
 class Game {
 
@@ -26,7 +26,9 @@ class Game {
             choosingCategories: false,
             question: "",
             answers: [],
+            roundStarted: false,
             roundFinished: false,
+            questionBegins: false,
             timerLength: TIMER_LENGTH,
             timeRemaining: 10,
             reason: "",
@@ -131,6 +133,7 @@ class Game {
             player.status = "";
         }
         this.state.roundFinished = false;
+        this.state.questionBegins = true;
         this.state.timeRemaining = this.state.timerLength;
         this.state.correct_answer = "";
 
@@ -146,6 +149,7 @@ class Game {
         }
     }
 
+    /** Handler for when a player submits an answer */
     playerAnswered() {
         const playersAnswered = this.players.filter((player) => player.didAnswer);
         if (playersAnswered.length === this.players.length) {
@@ -154,6 +158,7 @@ class Game {
         }
         this.state.reason = "player answered";
         this.state.newQuestion = false;
+        this.state.questionBegins = false;
         this.stateUpdate();
     }
 

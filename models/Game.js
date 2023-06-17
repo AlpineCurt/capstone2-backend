@@ -20,6 +20,7 @@ class Game {
     constructor(gameId) {
         this.id = gameId;
         this.players = [];
+        this.avatarsInUse = new Set();
         this.acceptingNewPlayers = true;
         this.state = {
             phase: "lobby",
@@ -81,6 +82,7 @@ class Game {
 
     /** player joining a game */
     join(player) {
+        // Check if name in use
         const players = new Set(
             this.players.map((player) => player.name)
         );
@@ -90,6 +92,16 @@ class Game {
                 player.isHost = true;
             }
         }
+        // Assign avatar to player
+        while(true) {
+            let avatarId = Math.floor(Math.random() * 9);
+            if (!this.avatarsInUse.has(avatarId)) {
+                this.avatarsInUse.add(avatarId);
+                player.avatarId = avatarId;
+                break;
+            }
+        }
+
         this.state.reason = "player joined";
         this.stateUpdate();
     }
@@ -98,6 +110,7 @@ class Game {
     leave(player) {
         if (this.acceptingNewPlayers) {
             this.players = this.players.filter((p) => p !== player);
+            this.avatarsInUse.delete(player.avatarId);
             if (this.players.length) this.players[0].isHost = true;
         }
         this.state.reason = "player left";
@@ -140,6 +153,7 @@ class Game {
         // get next question
         if (this.currQuesIdx === this.questions.length) {
             this.state.phase = "results";
+            this.state.reason = "game ended, show results";
         } else {
             this.state.question = this.questions[this.currQuesIdx].question;
             this.state.answers = [...this.questions[this.currQuesIdx].incorrect_answers];
@@ -198,7 +212,8 @@ class Game {
                 name: player.name,
                 isHost: player.isHost,
                 score: player.score,
-                status: player.status
+                status: player.status,
+                avatarId: player.avatarId
             }))
         });
     }

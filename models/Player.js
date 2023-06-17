@@ -23,6 +23,7 @@ class Player {
         this.didAnswer = false;
         this.answer = "";
         this.timeScore = 0;
+        this.avatarId = null;
     }
 
     send(data) {

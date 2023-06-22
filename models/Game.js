@@ -12,8 +12,9 @@ const GAMES = new Map();
 const SCORE_MULTIPLIER = 5;
 /* SCORE_MULTIPLIER * seconds remaining = points awarded */
 const TIMEOUT_PENALTY = 20; // points
-const TIMER_LENGTH = 10; // seconds
-const QUESTION_COUNT = 4;
+const TIMER_LENGTH = 30; // seconds
+const QUESTION_COUNT = 10;
+const MAX_PLAYERS = 9; // Maximum number of players per game
 
 class Game {
 
@@ -56,14 +57,23 @@ class Game {
         return GAMES.has(gameId);
     }
 
+    /** check if username available in gameId */
+    static nameAvailable(username, gameId) {
+        return GAMES.get(gameId).players.has(username);
+    }
+
     /** Check if player in gameId.
-     * Returns Player object if true,
+     * Returns Player object if player found.
+     * Returns true if game found, but no player.
      * false otherwise
     */
     static playerInGameId(username, gameId) {
-        const game = this.get(gameId);
-        for (let player of game.players) {
-            if (player.name === username) return player;
+        if (GAMES.has(gameId)) {
+            let game = Game.get(gameId);
+            for (let player of game.players) {
+                if (player.name === username) return player;
+            }
+            return true;
         }
         return false;
     }
@@ -80,8 +90,37 @@ class Game {
         }
     }
 
+    static gameCheck (username, gameId) {
+        let gameCheck = {
+            exists: false,
+            usernameAvailable: true,
+            full: false
+        };
+    
+        // Does gameId exist?
+        gameCheck.exists = Game.exists(gameId);
+    
+        // Is this username taken?
+        const playerCheck = Game.playerInGameId(username, gameId);
+        if (playerCheck instanceof Object) {
+            gameCheck.usernameAvailable = false;
+        }
+    
+        // Is there room in the game?
+        if (gameCheck.exists) {
+            //debugger;
+            const game = Game.get(gameId);
+            if (game.players.length === MAX_PLAYERS) {
+                gameCheck.full = true;
+            }
+        }
+    
+        return gameCheck;
+    }
+
     /** player joining a game */
     join(player) {
+        //debugger;
         // Check if name in use
         const players = new Set(
             this.players.map((player) => player.name)

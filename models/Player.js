@@ -24,6 +24,7 @@ class Player {
         this.answer = "";
         this.timeScore = 0;
         this.avatarId = null;
+        this.active = true;
     }
 
     send(data) {

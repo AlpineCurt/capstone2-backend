@@ -12,7 +12,7 @@ const GAMES = new Map();
 const SCORE_MULTIPLIER = 5;
 /* SCORE_MULTIPLIER * seconds remaining = points awarded */
 const TIMEOUT_PENALTY = 20; // points
-const TIMER_LENGTH = 30; // seconds
+const TIMER_LENGTH = 18; // seconds
 const QUESTION_COUNT = 10;
 const MAX_PLAYERS = 9; // Maximum number of players per game
 const PAUSE_BETWEEN_QESTIONS = 5000;
@@ -33,7 +33,7 @@ class Game {
             roundFinished: false,
             questionBegins: false,
             timerLength: TIMER_LENGTH,
-            timeRemaining: 10,
+            timeRemaining: TIMER_LENGTH,
             reason: "",
             correct_answer: ""
         }
@@ -43,6 +43,8 @@ class Game {
         this.currQuesIdx = 0;
         this.newQuestion = true;
         this.inProgress = false;
+        this.host = null;
+        this.roundTimeRemaining = TIMER_LENGTH;
     }
 
     /** Get Game object by gameId, creating if nonexistent */
@@ -129,6 +131,7 @@ class Game {
             this.players.push(player);
             if (this.players.length === 1) {
                 player.isHost = true;
+                this.host = player;
             }
         }
 
@@ -150,8 +153,18 @@ class Game {
         } else {
             // player is rejoining, send state update to only this player
             let altState = {...this.state};
+            // get time from host
             if (!player.didAnswer) {
-                altState.timeRemaining = 15;
+                if (this.roundTimeRemaining - 5 > 0) {
+                    if (this.roundTimeRemaining === 30) {
+                        altState.timeRemaining = 30;
+                    } else {
+                        altState.timeRemaining = this.roundTimeRemaining - 5;
+                    }
+                } else {
+                    altState.timeRemaining = 1;
+                }
+                
             }
             const data = {
                 type: "gameStateUpdate",
@@ -170,24 +183,37 @@ class Game {
 
     /** player leaving a game */
     leave(player) {
-        if (this.acceptingNewPlayers) {
-            this.players = this.players.filter((p) => p !== player);
-            this.avatarsInUse.delete(player.avatarId);
-            this.state.reason = "player left";
-            this.stateUpdate();
-        }
-        player.active = false;
-        player.status = "Disconnected";
+        // if (this.acceptingNewPlayers) {
+        //     this.players = this.players.filter((p) => p !== player);
+        //     this.avatarsInUse.delete(player.avatarId);
+        //     this.state.reason = "player left";
+        //     this.stateUpdate();
+        // }
+        // player.active = false;
+        // player.status = "Disconnected";
         if (!this.players.length) {
             GAMES.delete(player.game.id);
-        }        
+        } else {
+            if (player.isHost){
+                for (let p of this.players) {
+                    if (!p.isHost) {
+                        this.host = p;
+                        p.isHost = true;
+                        player.isHost = false;
+                        break;
+                    }
+                }
+            }
+            if (this.acceptingNewPlayers) {
+                this.players = this.players.filter((p) => p !== player);
+                this.avatarsInUse.delete(player.avatarId);
+                this.state.reason = "player left";
+                this.stateUpdate();
+            }
+            player.active = false;
+            player.status = "Disconnected";
+        }
     }
-
-    // close() {
-    //     // i dont' think this is ever used...
-    //     this.players[0].isHost = true;
-    //     this.stateUpdate();
-    // }
 
     /** Host selects Begin Game in Lobby */
     async beginGame() {
@@ -270,6 +296,10 @@ class Game {
         this.state.reason = "new question";
         this.stateUpdate();
         this.state.newQuestion = false;
+    }
+
+    timerUpdate(time) {
+        this.roundTimeRemaining = time;
     }
 
     /** Broadcasts an updated gameState to current players.

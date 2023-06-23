@@ -14,8 +14,6 @@ const wsExpress = require("express-ws")(app);
 app.use(cors());
 app.use(express.json());
 
-//const { gameCheck } = require("./helperFunctions.js");
-
 
 /** Request new valid gameId */
 
@@ -50,10 +48,11 @@ app.ws("/games/:gameId", (ws, req, next) => {
 
         if (req.query.username) {
             // Attempt to reconnect if user already exists
-            const player = Game.playerInGameId(req.query.username, req.params.gameId);
-            if (player instanceof Player) {
-                user = player;
+            user = Game.playerInGameId(req.query.username, req.params.gameId);
+            if (user instanceof Player) {
                 user.send = ws.send.bind(ws);  // re-bind the new ws connection to Player send method
+                user.active = true;
+                user.status = "";
             } else {
                 user = new Player(
                     ws.send.bind(ws), // function to send messages to this player

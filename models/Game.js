@@ -15,6 +15,7 @@ const TIMEOUT_PENALTY = 20; // points
 const TIMER_LENGTH = 30; // seconds
 const QUESTION_COUNT = 10;
 const MAX_PLAYERS = 9; // Maximum number of players per game
+const PAUSE_BETWEEN_QESTIONS = 5000;
 
 class Game {
 
@@ -41,6 +42,7 @@ class Game {
         this.token = "";
         this.currQuesIdx = 0;
         this.newQuestion = true;
+        this.inProgress = false;
     }
 
     /** Get Game object by gameId, creating if nonexistent */
@@ -102,13 +104,12 @@ class Game {
     
         // Is this username taken?
         const playerCheck = Game.playerInGameId(username, gameId);
-        if (playerCheck instanceof Object) {
+        if (playerCheck instanceof Object && !playerCheck.game.inProgress) {
             gameCheck.usernameAvailable = false;
         }
     
         // Is there room in the game?
         if (gameCheck.exists) {
-            //debugger;
             const game = Game.get(gameId);
             if (game.players.length === MAX_PLAYERS) {
                 gameCheck.full = true;
@@ -120,8 +121,7 @@ class Game {
 
     /** player joining a game */
     join(player) {
-        //debugger;
-        // Check if name in use
+        // Check if name in use and assign host
         const players = new Set(
             this.players.map((player) => player.name)
         );
@@ -131,18 +131,41 @@ class Game {
                 player.isHost = true;
             }
         }
+
         // Assign avatar to player
-        while(true) {
-            let avatarId = Math.floor(Math.random() * 9);
-            if (!this.avatarsInUse.has(avatarId)) {
-                this.avatarsInUse.add(avatarId);
-                player.avatarId = avatarId;
-                break;
+        if (!player.avatarId) {
+            while(true) {
+                let avatarId = Math.floor(Math.random() * 9);
+                if (!this.avatarsInUse.has(avatarId)) {
+                    this.avatarsInUse.add(avatarId);
+                    player.avatarId = avatarId;
+                    break;
+                }
             }
         }
 
-        this.state.reason = "player joined";
-        this.stateUpdate();
+        if (!this.inProgress) {
+            this.state.reason = "player joined";
+            this.stateUpdate();
+        } else {
+            // player is rejoining, send state update to only this player
+            let altState = {...this.state};
+            if (!player.didAnswer) {
+                altState.timeRemaining = 15;
+            }
+            const data = {
+                type: "gameStateUpdate",
+                state: altState,
+                players: this.players.map(player => ({
+                    name: player.name,
+                    isHost: player.isHost,
+                    score: player.score,
+                    status: player.status,
+                    avatarId: player.avatarId
+                }))
+            }
+            player.send(JSON.stringify(data));
+        }
     }
 
     /** player leaving a game */
@@ -150,23 +173,28 @@ class Game {
         if (this.acceptingNewPlayers) {
             this.players = this.players.filter((p) => p !== player);
             this.avatarsInUse.delete(player.avatarId);
-            if (this.players.length) this.players[0].isHost = true;
+            this.state.reason = "player left";
+            this.stateUpdate();
         }
-        this.state.reason = "player left";
-        this.stateUpdate();
+        player.active = false;
+        player.status = "Disconnected";
+        if (!this.players.length) {
+            GAMES.delete(player.game.id);
+        }        
     }
 
-    close() {
-        // i dont' think this is ever used...
-        this.players[0].isHost = true;
-        this.stateUpdate();
-    }
+    // close() {
+    //     // i dont' think this is ever used...
+    //     this.players[0].isHost = true;
+    //     this.stateUpdate();
+    // }
 
     /** Host selects Begin Game in Lobby */
     async beginGame() {
         this.acceptingNewPlayers = false;
         this.state.choosingCategories = true;
         this.state.phase = "inGame";
+        this.inProgress = true;
         try {
             this.token = await TriviaApi.getToken();
             this.questions = await TriviaApi.getQuestions(this.questionCount, this.token);
@@ -182,7 +210,7 @@ class Game {
         // Reset for next question
         for (let player of this.players) {
             player.didAnswer = false;
-            player.status = "";
+            if (player.active) player.status = "";
         }
         this.state.roundFinished = false;
         this.state.questionBegins = true;
@@ -205,14 +233,18 @@ class Game {
     /** Handler for when a player submits an answer */
     playerAnswered() {
         const playersAnswered = this.players.filter((player) => player.didAnswer);
-        if (playersAnswered.length === this.players.length) {
+        const activePlayers = this.players.filter((player) => player.active);
+        if (playersAnswered.length >= activePlayers.length) {
             this.checkAnswers();
             this.state.roundFinished = true;
+            setTimeout(() => this.nextQuestion(), PAUSE_BETWEEN_QESTIONS);
+
         }
         this.state.reason = "player answered";
         this.state.newQuestion = false;
         this.state.questionBegins = false;
         this.stateUpdate();
+        
     }
 
     /** Checks each players' answer, awards points */
@@ -220,12 +252,12 @@ class Game {
         for (let player of this.players) {
             if (player.answer === this.questions[this.currQuesIdx].correct_answer) {
                 player.score += player.timeScore * SCORE_MULTIPLIER;
-                player.status = "Correct!";
+                if (player.active) player.status = "Correct!";
             } else {
-                if (player.answer === "timeOut-33") {
+                if (player.answer === "timeOut-33" || !player.active) {
                     player.score -= TIMEOUT_PENALTY;
                 }
-                player.status = "Wrong!";
+                if (player.active) player.status = "Wrong!";
             }
         }
         this.state.newQuestion = false;

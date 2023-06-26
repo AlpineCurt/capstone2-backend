@@ -1,20 +1,20 @@
 /** Player class.   */
 
-const Game = require("./Game");
+//const Game = require("./Game");
 
 /** Player class handles communication between an
  *  individual player and the server */
 
 class Player {
 
-    constructor(send, gameId) {
+    constructor() {
         
         /* function to send messages to this user.
         created by server when instantiating Player class*/
-        this._send = send;
+        this._send = null;
 
         /* Access to Game object to which this Player will belong */
-        this.game = Game.get(gameId);
+        this.game = null;
 
         this.name = null;
         this.isHost = false;
@@ -48,8 +48,6 @@ class Player {
     handleBeginGame() {
         if (this.isHost) {
             this.game.beginGame();
-            // this.player.game.acceptingNewPlayers = false;
-            // this.players.game.state.choosingCategories = true;
         }
     }
 
@@ -65,7 +63,6 @@ class Player {
     handleJoin(name) {
         this.name = name;
         this.game.join(this);
-        // need to broadcast to other players.
     }
 
     /** Connection was closed:  leave game, send message to other players */
@@ -101,6 +98,7 @@ class Player {
         else if (msg.type === "answer") this.handleAnswer(msg.data);
         else if (msg.type === "nextQuestion") this.game.nextQuestion();
         else if (msg.type === "timerUpdate") this.game.timerUpdate(msg.data);
+        else if (msg.type === "resetGame") this.game.resetGame();
     }
 }
 

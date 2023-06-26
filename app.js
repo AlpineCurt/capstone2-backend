@@ -50,14 +50,13 @@ app.ws("/games/:gameId", (ws, req, next) => {
             // Attempt to reconnect if user already exists
             user = Game.playerInGameId(req.query.username, req.params.gameId);
             if (user instanceof Player) {
-                user.send = ws.send.bind(ws);  // re-bind the new ws connection to Player send method
+                user._send = ws.send.bind(ws);  // re-bind the new ws connection to Player send method
                 user.active = true;
                 user.status = "";
             } else {
-                user = new Player(
-                    ws.send.bind(ws), // function to send messages to this player
-                    req.params.gameId
-                );
+                user = new Player()
+                user._send = ws.send.bind(ws);
+                user.game = Game.get(req.params.gameId);
             }
         } else {
             user = new Player(
@@ -68,7 +67,14 @@ app.ws("/games/:gameId", (ws, req, next) => {
 
         ws.on("message", (data) => {
             try {
-                user.handleMessage(data);
+                if (data === "hello") {
+                    console.log("RECEIVED TEST MESSAGE");  // this gets logged.
+                    // user.send("message") does not work. WHY?
+                    ws.send("response from server!!");
+                } else {
+                    user.handleMessage(data);
+                }
+                
             } catch (err) {
                 console.log(err);
             }

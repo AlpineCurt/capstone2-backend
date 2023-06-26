@@ -12,8 +12,8 @@ const GAMES = new Map();
 const SCORE_MULTIPLIER = 5;
 /* SCORE_MULTIPLIER * seconds remaining = points awarded */
 const TIMEOUT_PENALTY = 20; // points
-const TIMER_LENGTH = 18; // seconds
-const QUESTION_COUNT = 10;
+const TIMER_LENGTH = 20; // seconds
+const QUESTION_COUNT = 3;
 const MAX_PLAYERS = 9; // Maximum number of players per game
 const PAUSE_BETWEEN_QESTIONS = 5000;
 
@@ -39,7 +39,7 @@ class Game {
         }
         this.questions = [];
         this.questionCount = QUESTION_COUNT;
-        this.token = "";
+        this.token = null;
         this.currQuesIdx = 0;
         this.newQuestion = true;
         this.inProgress = false;
@@ -153,7 +153,6 @@ class Game {
         } else {
             // player is rejoining, send state update to only this player
             let altState = {...this.state};
-            // get time from host
             if (!player.didAnswer) {
                 if (this.roundTimeRemaining - 5 > 0) {
                     if (this.roundTimeRemaining === 30) {
@@ -183,14 +182,6 @@ class Game {
 
     /** player leaving a game */
     leave(player) {
-        // if (this.acceptingNewPlayers) {
-        //     this.players = this.players.filter((p) => p !== player);
-        //     this.avatarsInUse.delete(player.avatarId);
-        //     this.state.reason = "player left";
-        //     this.stateUpdate();
-        // }
-        // player.active = false;
-        // player.status = "Disconnected";
         if (!this.players.length) {
             GAMES.delete(player.game.id);
         } else {
@@ -222,13 +213,41 @@ class Game {
         this.state.phase = "inGame";
         this.inProgress = true;
         try {
-            this.token = await TriviaApi.getToken();
+            if (!this.token) {
+                this.token = await TriviaApi.getToken();
+            }
             this.questions = await TriviaApi.getQuestions(this.questionCount, this.token);
             this.prepareQuestion();
         } catch (err) {
             console.log(err);
         }
         this.state.reason = "begin game";
+        this.stateUpdate();
+    }
+
+    /** Host selects New Game from Results page */
+    resetGame() {
+        this.players = this.players.filter((p) => p.active); // remove disconnected players
+        this.players.forEach((p) => {
+            p.score = 0;
+            p.status = "";
+            p.didAnswer = false;
+            p.answer = "";
+        });
+        this.state.phase = "lobby";
+        this.acceptingNewPlayers = true;
+        this.state.roundStarted = false;
+        this.state.roundFinished = false;
+        this.inProgress = false;
+        this.questionBegins = false;
+        this.timeRemaining = TIMER_LENGTH;
+        this.timerLength = TIMER_LENGTH;
+        this.state.question = "";
+        this.state.answers = [];
+        this.questions = [];
+        this.roundTimeRemaining = TIMER_LENGTH;
+        this.currQuesIdx = 0;
+
         this.stateUpdate();
     }
 
@@ -245,6 +264,8 @@ class Game {
 
         // get next question
         if (this.currQuesIdx === this.questions.length) {
+            // all questions complete, move to results phase
+            this.host.status = "Host";
             this.state.phase = "results";
             this.state.reason = "game ended, show results";
         } else {
@@ -270,7 +291,6 @@ class Game {
         this.state.newQuestion = false;
         this.state.questionBegins = false;
         this.stateUpdate();
-        
     }
 
     /** Checks each players' answer, awards points */

@@ -13,7 +13,7 @@ const SCORE_MULTIPLIER = 5;
 /* SCORE_MULTIPLIER * seconds remaining = points awarded */
 const TIMEOUT_PENALTY = 20; // points
 const TIMER_LENGTH = 20; // seconds
-const QUESTION_COUNT = 3;
+const QUESTION_COUNT = 10;
 const MAX_PLAYERS = 9; // Maximum number of players per game
 const PAUSE_BETWEEN_QESTIONS = 5000;
 

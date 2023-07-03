@@ -6,17 +6,17 @@ const e = require("express");
 
 const { TriviaApi } = require("../api.js");
 const { HighScore } = require("./HighScore.js");
+const { SCORE_MULTIPLIER,
+        TIMEOUT_PENALTY,
+        TIMER_LENGTH,
+        QUESTION_COUNT,
+        MAX_PLAYERS,
+        PAUSE_BETWEEN_QESTIONS} = require("../config.js");
 
 // in-memory storage of Game instances
 const GAMES = new Map();
 
-const SCORE_MULTIPLIER = 5;
-/* SCORE_MULTIPLIER * seconds remaining = points awarded */
-const TIMEOUT_PENALTY = 20; // points
-const TIMER_LENGTH = 20; // seconds
-const QUESTION_COUNT = 10;
-const MAX_PLAYERS = 9; // Maximum number of players per game
-const PAUSE_BETWEEN_QESTIONS = 5000;
+// /* SCORE_MULTIPLIER * seconds remaining = points awarded */
 
 class Game {
 

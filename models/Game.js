@@ -5,6 +5,7 @@
 const e = require("express");
 
 const { TriviaApi } = require("../api.js");
+const { HighScore } = require("./HighScore.js");
 
 // in-memory storage of Game instances
 const GAMES = new Map();
@@ -251,7 +252,7 @@ class Game {
         this.stateUpdate();
     }
 
-    prepareQuestion() {
+    async prepareQuestion() {
         // Reset for next question
         for (let player of this.players) {
             player.didAnswer = false;
@@ -265,9 +266,16 @@ class Game {
         // get next question
         if (this.currQuesIdx === this.questions.length) {
             // all questions complete, move to results phase
-            this.host.status = "Host";
             this.state.phase = "results";
             this.state.reason = "game ended, show results";
+            // Check for new high score
+            this.players.sort((a, b) => b.score - a.score);
+            const lowestHighScore = await HighScore.get10thHighScore();
+            if (this.players[0].score > lowestHighScore) {
+                await HighScore.create(this.players[0].name, this.players[0].score);
+                this.players[0].status = "New High Score!";
+            }
+
         } else {
             this.state.question = this.questions[this.currQuesIdx].question;
             this.state.answers = [...this.questions[this.currQuesIdx].incorrect_answers];

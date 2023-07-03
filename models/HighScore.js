@@ -7,7 +7,7 @@ class HighScore {
      *  Multiple score entries from the same username are allowed.
     */
    
-    static async create({ username, score }) {
+    static async create(username, score) {
         const result = await db.query(
             `INSERT INTO high_scores
             (username, score)
@@ -27,7 +27,6 @@ class HighScore {
         const query = await db.query(
             `SELECT score FROM high_scores ORDER BY score DESC LIMIT 1 OFFSET 9`
         );
-        //debugger;
         return query.rows[0].score;
     }
 
@@ -40,4 +39,4 @@ class HighScore {
     }
 }
 
-module.exports = HighScore;
+module.exports = { HighScore };

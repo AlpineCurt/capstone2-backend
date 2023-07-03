@@ -3,7 +3,7 @@
 const jsonschema = require("jsonschema");
 
 const express = require("express");
-const HighScore = require("../models/HighScore");
+const { HighScore } = require("../models/HighScore");
 const { BadRequestError } = require("../expressError");
 const highScoreNewSchema = require("../schemas/highScoreNew.json");
 

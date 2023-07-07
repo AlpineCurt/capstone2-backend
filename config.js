@@ -13,13 +13,13 @@ const SCORE_MULTIPLIER = process.env.SCORE_MULTIPLIER || 5;
 
 const TIMEOUT_PENALTY = process.env.TIMEOUT_PENALTY || 20;
 
-const TIMER_LENGTH = process.env.TIMER_LENGTH || 20; // seconds
+const TIMER_LENGTH = process.env.TIMER_LENGTH || 10; // seconds
 
-const QUESTION_COUNT = process.env.QUESTION_COUNT || 10;
+const QUESTION_COUNT = process.env.QUESTION_COUNT || 3;
 
 const MAX_PLAYERS = process.env.MAX_PLAYERS || 9;
 
-const PAUSE_BETWEEN_QESTIONS = process.env.PAUSE_BETWEEN_QESTIONS || 5000; // in miliseconds
+const PAUSE_BETWEEN_QUESTIONS = process.env.PAUSE_BETWEEN_QESTIONS || 5000; // in miliseconds
 
 // Use dev database, testing database, or via env var, production database
 function getDatabaseUri() {
@@ -43,5 +43,5 @@ module.exports = {
     TIMER_LENGTH,
     QUESTION_COUNT,
     MAX_PLAYERS,
-    PAUSE_BETWEEN_QESTIONS
+    PAUSE_BETWEEN_QUESTIONS
 }

@@ -11,7 +11,7 @@ const { SCORE_MULTIPLIER,
         TIMER_LENGTH,
         QUESTION_COUNT,
         MAX_PLAYERS,
-        PAUSE_BETWEEN_QESTIONS} = require("../config.js");
+        PAUSE_BETWEEN_QUESTIONS } = require("../config.js");
 
 // in-memory storage of Game instances
 const GAMES = new Map();
@@ -36,7 +36,9 @@ class Game {
             timerLength: TIMER_LENGTH,
             timeRemaining: TIMER_LENGTH,
             reason: "",
-            correct_answer: ""
+            correct_answer: "",
+            question_number: 1,
+            total_questions: QUESTION_COUNT
         }
         this.questions = [];
         this.questionCount = QUESTION_COUNT;
@@ -278,6 +280,7 @@ class Game {
 
         } else {
             this.state.question = this.questions[this.currQuesIdx].question;
+            this.state.question_number = this.currQuesIdx + 1;
             this.state.answers = [...this.questions[this.currQuesIdx].incorrect_answers];
             const randIdx = Math.floor(Math.random() * 4);
             this.state.answers.splice(randIdx, 0, this.questions[this.currQuesIdx].correct_answer);
@@ -292,7 +295,7 @@ class Game {
         if (playersAnswered.length >= activePlayers.length) {
             this.checkAnswers();
             this.state.roundFinished = true;
-            setTimeout(() => this.nextQuestion(), PAUSE_BETWEEN_QESTIONS);
+            setTimeout(() => this.nextQuestion(), PAUSE_BETWEEN_QUESTIONS);
 
         }
         this.state.reason = "player answered";

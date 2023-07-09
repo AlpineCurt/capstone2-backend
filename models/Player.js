@@ -1,7 +1,5 @@
 /** Player class.   */
 
-//const Game = require("./Game");
-
 /** Player class handles communication between an
  *  individual player and the server */
 

@@ -65,9 +65,12 @@ class Game {
     }
 
     /** check if username available in gameId */
-    static nameAvailable(username, gameId) {
-        return GAMES.get(gameId).players.has(username);
-    }
+    // static nameAvailable(username, gameId) {
+    //     console.log(GAMES.get(gameId).players);
+    //     const players = GAMES.get(gameId).players.forEach((player) => player.name);
+    //     debugger;
+    //     return GAMES.get(gameId).players.has(username);
+    // }
 
     /** Check if player in gameId.
      * Returns Player object if player found.
@@ -120,7 +123,6 @@ class Game {
                 gameCheck.full = true;
             }
         }
-    
         return gameCheck;
     }
 
@@ -274,7 +276,11 @@ class Game {
             this.players.sort((a, b) => b.score - a.score);
             const lowestHighScore = await HighScore.get10thHighScore();
             if (this.players[0].score > lowestHighScore) {
-                await HighScore.create(this.players[0].name, this.players[0].score);
+                await HighScore.create({
+                    username: this.players[0].name,
+                    score: this.players[0].score
+                });
+                //await HighScore.create(this.players[0].name, this.players[0].score);
                 this.players[0].status = "New High Score!";
             }
 
@@ -358,4 +364,4 @@ class Game {
     }
 }
 
-module.exports = Game;
+module.exports = { Game, GAMES};

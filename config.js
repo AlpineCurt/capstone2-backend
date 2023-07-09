@@ -28,11 +28,14 @@ function getDatabaseUri() {
         : process.env.DATABASE_URL || "postgresql:///trivia_game";
   }
 
-console.log("Trivia Config:".green);
-console.log("SECRET_KEY:".yellow, SECRET_KEY);
-console.log("PORT:".yellow, PORT.toString());
-console.log("Database:".yellow, getDatabaseUri());
-console.log("---");
+if (process.env.NODE_ENV !== "test") {
+    console.log("Trivia Config:".green);
+    console.log("SECRET_KEY:".yellow, SECRET_KEY);
+    console.log("PORT:".yellow, PORT.toString());
+    console.log("Database:".yellow, getDatabaseUri());
+    console.log("---");
+}
+
 
 module.exports = {
     SECRET_KEY,

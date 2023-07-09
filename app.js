@@ -5,7 +5,7 @@ const cors = require("cors");
 
 const { NotFoundError } = require("./expressError.js");
 const Player = require("./models/Player.js")
-const Game = require("./models/Game.js");
+const { Game } = require("./models/Game.js");
 const gameRoutes = require("./routes/games.js");
 const highScoreRoutes = require("./routes/highScores.js");
 

@@ -7,7 +7,8 @@ class HighScore {
      *  Multiple score entries from the same username are allowed.
     */
    
-    static async create(username, score) {
+    // Currently not used
+    static async create({ username, score }) {
         const result = await db.query(
             `INSERT INTO high_scores
             (username, score)
@@ -21,9 +22,9 @@ class HighScore {
     }
 
     /* Returns the 10th highest high_score score value
-    Used by results to determine if new high score was achieved */
+    Used by results to determine if new high score was achieved.
+    Currently not used.  */
     static async get10thHighScore() {
-        //debugger;
         const query = await db.query(
             `SELECT score FROM high_scores ORDER BY score DESC LIMIT 1 OFFSET 9`
         );
